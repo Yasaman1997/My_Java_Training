@@ -6,13 +6,11 @@ public class Main {
 
 
     public static void main(String[] args) {
-
-
         Sample sample = new Sample();
-        sample.setBounds(30,30,600,600);
+        sample.setBounds(30, 30, 600, 600);
         sample.setVisible(true);
 
-
+        sample.actionHandler();
 
 
     }
