@@ -79,7 +79,6 @@ public class Sample extends JFrame {
         menuBar.add(fileMenu);
         menuBar.add(editMenu);
 
-
         setTitle("Hello Ceit:)");
         setSize(500, 500);
 
@@ -107,8 +106,10 @@ public class Sample extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final JFileChooser fileChooser = new JFileChooser();
+
                 fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
                 int result = fileChooser.showOpenDialog(menuBar);
+
 
                 BufferedImage image = null;
                 if (result == JFileChooser.APPROVE_OPTION) {
