@@ -50,6 +50,8 @@ class ImageHandler extends Canvas {
     boolean actionTransparent;
     boolean actionRotated;
     boolean actionDraw;
+    boolean actionfiltered;
+    boolean actioncolored;
     boolean drawn;
     MediaTracker mt;
     static Color c;
@@ -63,8 +65,8 @@ class ImageHandler extends Canvas {
 
     public ImageHandler() {
 
-        addMouseListener(new Mousexy()); //hanlding mouse event of Canvas class
-        addKeyListener(new KList()); //handling key event of the Canvas
+        addMouseListener(new Mousexy()); //hanlding mouse event
+        addKeyListener(new KList()); //handling key event
         try {
             rb = new Robot(); //create Robot object
         } catch (AWTException e) {
@@ -180,11 +182,9 @@ class ImageHandler extends Canvas {
 
     //initialize variables
     public void initialize() {
+
         imageLoaded = false;
         actionSlided = false;
-        actionResized = false;
-        actionCompressed = false;
-        actionTransparent = false;
         actionRotated = false;
         actionDraw = false;
         actioncropped = false;
@@ -211,7 +211,7 @@ class ImageHandler extends Canvas {
         Graphics2D g2d = (Graphics2D) bi.createGraphics();
         radian = (float) Math.PI / 2; //angle
         g2d.translate(w / 2, h / 2);
-        //  move to coordinate(w / 2, h / 2)
+
         g2d.rotate(radian); //rotate the image
         g2d.translate(-h / 2, -w / 2); //move the coordinate back
         g2d.drawImage(image, 0, 0, null); //draw the rotated image
@@ -225,7 +225,7 @@ class ImageHandler extends Canvas {
     public void rotateImage() {
         BufferedImage bi;
         //rotate update image
-        if (actionSlided || actionResized || actionTransparent || actionRotated || drawn) {
+        if (actionSlided || actionResized || actionRotated || drawn) {
             bi = bimg;
         }
         //rotate the original image
@@ -237,20 +237,23 @@ class ImageHandler extends Canvas {
 
         actionRotated = true; //set the actionRotated to true to indicate that
         //the image is rotated
-        repaint(); //repaint the update image
+        repaint();
+
+        //repaint the update image
 
     }
 
-
-    //The resizeImage method has code to resize the image
-    //This method is invoked when the user clicks OK button on the image resize window
-    //The image resize window is displayed when you select the Image resize sub-menu item
+    /**
+     * The resizeImage method has code to resize the image
+     * This method is invoked when the user clicks OK button on the image resize window
+     * The image resize window is displayed when you select the Image resize sub-menu item
+     */
     public void resizeImage(int w, int h) {
         BufferedImage bi = (BufferedImage) createImage(w, h);
         Graphics2D g2d = (Graphics2D) bi.createGraphics();
         //resize the update image
 
-        if (actionSlided || actionTransparent || actionRotated || drawn)
+        if (actionSlided || actionTransparent ||actioncropped|| actionRotated || drawn)
             g2d.drawImage(bimg, 0, 0, w, h, null);
             //resize the original image
         else
@@ -287,7 +290,11 @@ class ImageHandler extends Canvas {
     }
 
 
-    //Prepare the image so it is ready to display and editable
+    /**
+     * Prepare the image so it is ready to display and editable
+     *
+     * @param filename
+     */
     public void prepareImage(String filename) {
         initialize();
         try {
@@ -312,9 +319,9 @@ class ImageHandler extends Canvas {
 
     /**
      * The filterImage method applies brightness to the image when the knob of the image slider is
-     * //making changed.
-     * //When the value of the image slider changes it affects the e variable
-     * //so the image is brighter or darker
+     * making changed.
+     * When the value of the image slider changes it affects the e variable
+     * so the image is brighter or darker
      **/
     public void filterImage() {
         float[] elements = {0.0f, 1.0f, 0.0f, -1.0f, e, 1.0f, 0.0f, 0.0f, 0.0f};
@@ -329,34 +336,62 @@ class ImageHandler extends Canvas {
 
     }
 
-    //set a value to e variable
-    //this method is invoked when the user makes change to the  image slider
+    /**
+     * for making a blank image when "New" pressed
+     */
+    public BufferedImage newImageAction() {
+        //create a blank buffered image
+        BufferedImage bi = (BufferedImage) createImage(2000, 2000);
+        //create the Graphics2D object from the buffered image
+        Graphics2D g2d = (Graphics2D) bi.createGraphics();
+        return bi;
+    }
+
+    /**
+     * set a value to e variable
+     * this method is invoked when the user makes change to the  image slider
+     */
     public void setValue(float value) {
         e = value;
     }
 
-    //Set a boolean value the actionSlided variable
+    /**
+     * Set a boolean value the actionSlided variable
+     */
     public void setActionSlided(boolean value) {
         actionSlided = value;
     }
 
-    //Set a boolean value the actionResized variable
-    public void setActionResized(boolean value) {
-        actionResized = value;
+    /**
+     * Set a boolean value the actionResized variable
+     *
+     * @param value
+     */
+    public void setActioncropped(boolean value) {
+        actioncropped = value;
     }
 
-    //Set a boolean value the actionCompressed variable
-    public void setActionCompressed(boolean value) {
-        actionCompressed = value;
-    }
 
-    //Set a boolean value the actionDraw variable
+    /**
+     * Set a boolean value the actionDraw variable
+     *
+     * @param value
+     */
+
     public void setActionDraw(boolean value) {
         actionDraw = value;
 
     }
 
-    //The createBufferedImageFromImage method is abled to generate a buffered image from an input image
+    /**
+     * The createBufferedImageFromImage method can generate a buffered image from an input image
+     *
+     * @param image
+     * @param width
+     * @param height
+     * @param tran
+     * @return
+     */
     public BufferedImage createBufferedImageFromImage(Image image, int width, int height, boolean tran) {
         BufferedImage dest;
         if (tran)
@@ -407,73 +442,56 @@ class ImageHandler extends Canvas {
  */
 class Controller extends JFrame implements ActionListener {
 
-    static ir.aut.ceit.approach.ImageHandler ia;
-
-
+    ImgArea ia;
     JFileChooser chooser;
     JMenuBar mainmenu;
     JMenu menu;
     JMenu editmenu;
-    JMenuItem mnew;
     JMenuItem mopen;
-    JMenuItem mclose;
-    JMenuItem msaveas;
+    JMenuItem mnew;
+    JMenuItem msave;
     JMenuItem mexit;
     JMenuItem mbright;
-    JMenuItem mresize;
     JMenuItem mrotate;
-    JMenuItem maddtext;
-    JMenuItem maddstickers;
-    JMenuItem mcrop;
-    JMenuItem mfilter;
     JMenuItem mcolor;
+    JMenuItem mfilter;
+    JMenuItem mcrop;
+    JMenuItem maddtext;
+    JMenuItem maddsticker;
     JMenuItem mcancel;
     String filename;
 
-
-    public Controller() {
-        ia = new ir.aut.ceit.approach.ImageHandler();
+    Controller() {
+        ia = new ImgArea();
         Container cont = getContentPane();
         cont.add(ia, BorderLayout.CENTER);
-
-        /**
-         * preparing the  GUI
-         */
         mainmenu = new JMenuBar();
         menu = new JMenu("File");
         menu.setMnemonic(KeyEvent.VK_F);
-
-
-        mnew = new JMenuItem("New");
-        mnew.setMnemonic(KeyEvent.VK_O);
-        mnew.addActionListener(this);
 
         mopen = new JMenuItem("Open");
         mopen.setMnemonic(KeyEvent.VK_O);
         mopen.addActionListener(this);
 
-        mclose = new JMenuItem("close");
-        mclose.setMnemonic(KeyEvent.VK_S);
-        mclose.addActionListener(this);
+        mnew = new JMenuItem("New");
+        mnew.setMnemonic(KeyEvent.VK_S);
+        mnew.addActionListener(this);
 
-        msaveas = new JMenuItem("Save as");
-        msaveas.setMnemonic(KeyEvent.VK_V);
-        msaveas.addActionListener(this);
+        msave = new JMenuItem("Save");
+        msave.setMnemonic(KeyEvent.VK_V);
+        msave.addActionListener(this);
 
         mexit = new JMenuItem("Exit");
         mexit.setMnemonic(KeyEvent.VK_X);
         mexit.addActionListener(this);
-
-
-        menu.add(mnew);
-        menu.addSeparator();
         menu.add(mopen);
         menu.addSeparator();
-        menu.add(mclose);
+        menu.add(mnew);
         menu.addSeparator();
-        menu.add(msaveas);
+        menu.add(msave);
         menu.addSeparator();
         menu.add(mexit);
+
 
         editmenu = new JMenu("Edit");
         editmenu.setMnemonic(KeyEvent.VK_E);
@@ -481,36 +499,33 @@ class Controller extends JFrame implements ActionListener {
         mbright.setMnemonic(KeyEvent.VK_B);
         mbright.addActionListener(this);
 
+        maddsticker = new JMenuItem("Add sticker on image");
+        maddsticker.setMnemonic(KeyEvent.VK_A);
+        maddsticker.addActionListener(this);
+
         maddtext = new JMenuItem("Add text on image");
         maddtext.setMnemonic(KeyEvent.VK_A);
         maddtext.addActionListener(this);
 
+        mcrop = new JMenuItem("Image crop");
+        mcrop.setMnemonic(KeyEvent.VK_R);
+        mcrop.addActionListener(this);
 
-        maddstickers = new JMenuItem("Add  Stickers on image");
-        maddstickers.setMnemonic(KeyEvent.VK_A);
-        maddstickers.addActionListener(this);
-
-
-        mresize = new JMenuItem("Image resize");
-        mresize.setMnemonic(KeyEvent.VK_R);
-        mresize.addActionListener(this);
 
         mrotate = new JMenuItem("Image rotation");
         mrotate.setMnemonic(KeyEvent.VK_T);
         mrotate.addActionListener(this);
 
 
-        mcrop = new JMenuItem("Image crop");
-        mcrop.setMnemonic(KeyEvent.VK_T);
-        mcrop.addActionListener(this);
-
         mfilter = new JMenuItem("Image Filter");
         mfilter.setMnemonic(KeyEvent.VK_T);
         mfilter.addActionListener(this);
 
-        mcolor = new JMenuItem("Image color");
+
+        mcolor = new JMenuItem("Image Color");
         mcolor.setMnemonic(KeyEvent.VK_T);
         mcolor.addActionListener(this);
+
 
         mcancel = new JMenuItem("Cancel editing");
         mcancel.setMnemonic(KeyEvent.VK_L);
@@ -518,38 +533,31 @@ class Controller extends JFrame implements ActionListener {
 
         editmenu.add(maddtext);
         editmenu.addSeparator();
+        editmenu.add(maddsticker);
+        editmenu.addSeparator();
         editmenu.add(mbright);
         editmenu.addSeparator();
-
-        editmenu.add(mresize);
+        editmenu.add(mcrop);
         editmenu.addSeparator();
         editmenu.add(mrotate);
         editmenu.addSeparator();
-
-        editmenu.add(mcrop);
-        editmenu.addSeparator();
-        editmenu.add(mfilter);
-        editmenu.addSeparator();
-
         editmenu.add(mcolor);
         editmenu.addSeparator();
 
+        editmenu.add(mfilter);
+        editmenu.addSeparator();
         editmenu.add(mcancel);
 
         mainmenu.add(menu);
         mainmenu.add(editmenu);
         setJMenuBar(mainmenu);
 
-       /* setTitle("Hello Ceit Aut Editor!!!!");
+        setTitle("Hello Ceit Aut Editor!!!!");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setExtendedState(this.getExtendedState() | this.MAXIMIZED_BOTH);
         setVisible(true);
-        setBounds(0,0,200,300);
-*/
+        setBounds(0, 0, 1000, 1000);
 
-        /**
-         * file chooser!
-         */
         chooser = new JFileChooser();
         FileNameExtensionFilter filter = new FileNameExtensionFilter("Image files", "jpg", "gif", "bmp", "png");
         chooser.setFileFilter(filter);
@@ -562,12 +570,12 @@ class Controller extends JFrame implements ActionListener {
      * start the ImageBrightness class
      * The ImageBrightness class represents the interface to allow the user to make the image
      * brighter or darker by changing the value of the image slider
-     * The ImageBrightness class is in the Controller class
+     * The ImageBrightness class is in the Main class
      */
     public class ImageBrightness extends JFrame implements ChangeListener {
         JSlider slider;
 
-        public ImageBrightness() {
+        ImageBrightness() {
             addWindowListener(new WindowAdapter() {
                 public void windowClosing(WindowEvent e) {
                     dispose();
@@ -606,16 +614,16 @@ class Controller extends JFrame implements ActionListener {
      * start the ImageResize class
      * The ImageResize class represents the interface that allows you to resize the image
      * by making changes to its width and height
-     * The ImageResize class is in the Controller class
+     * The ImageResize class is in the Main class
      */
-    public class ImageResize extends JFrame implements ActionListener {
+    public class ImageCrop extends JFrame implements ActionListener {
         JPanel panel;
         JTextField txtWidth;
         JTextField txtHeight;
         JButton btOK;
 
-        public ImageResize() {
-            setTitle("Image resize");
+        ImageCrop() {
+            setTitle("Image Crop");
             //setDefaultCloseOperation(EXIT_ON_CLOSE);
             setPreferredSize(new Dimension(400, 100));
 
@@ -650,9 +658,7 @@ class Controller extends JFrame implements ActionListener {
             btOK.setEnabled(enabled);
         }
 
-        /**
-         * This method works when you click the OK button to resize the image
-         */
+        //This method works when you click the OK button to resize the image
         public void actionPerformed(ActionEvent e) {
             if (e.getSource() == btOK) {
                 ia.setActionResized(true);
@@ -677,18 +683,15 @@ class Controller extends JFrame implements ActionListener {
             }
 
         }
-    }
-
-    ////end of the ImageResize class
-
+    }////end of the ImageCrop class
 
     /**
      * start the TextAdd class
-     * The TextAdd class represents the interface that allows you to add your text to the image
-     * In this interface you can input your text, select color, font name, and font size of the text
-     * The TextAdd class is in the Controller class
+     * //The TextAdd class represents the interface that allows you to add your text to the image
+     * //In this interface you can input your text, select color, font name, and font size of the text
+     * //The TextAdd class is in the Main class
      */
-    public static class TextAdd extends JFrame implements ActionListener {
+    public class TextAdd extends JFrame implements ActionListener {
         JPanel panel;
         JTextArea txtText;
         JComboBox cbFontNames;
@@ -700,10 +703,9 @@ class Controller extends JFrame implements ActionListener {
         int seFontSize;
 
 
-        public TextAdd() {
+        TextAdd() {
             colorText = null;
             setTitle("Add text to the image");
-            //setDefaultCloseOperation(EXIT_ON_CLOSE);
             setPreferredSize(new Dimension(400, 150));
 
             btOK = new JButton("OK");
@@ -738,8 +740,7 @@ class Controller extends JFrame implements ActionListener {
 
 
         public void actionPerformed(ActionEvent e) {
-            if (e.getSource() == btOK) {
-                //the button OK is clicked so the text is ready to place on the image
+            if (e.getSource() == btOK) { //the button OK is clicked so the text is ready to place on the image
                 ia.setActionDraw(true);
                 String textDraw = txtText.getText();
                 String fontName = cbFontNames.getSelectedItem().toString();
@@ -753,8 +754,8 @@ class Controller extends JFrame implements ActionListener {
             }
         }
 
-        /**
-         * The listFonts method get all available fonts from the system
+        /**The listFonts method get all available fonts from the system
+         *
          */
         public void listFonts() {
             //get the available font names and add them to the font names combobox
@@ -768,11 +769,13 @@ class Controller extends JFrame implements ActionListener {
 
         }
     }
-
     ////end of the TextAdd class
+
 
     /**
      * handling events of sub-menu items on the main program interface
+     *
+     * @param e
      */
     public void actionPerformed(ActionEvent e) {
 
@@ -785,46 +788,36 @@ class Controller extends JFrame implements ActionListener {
             validate();
 
 
-        } else if (source.getText().compareTo("Save as") == 0) {
+        } else if (source.getText().compareTo("Save") == 0) {
 
-            showSaveFileDialog();
+            ia.saveToFile(filename);
+        } else if (source.getText().compareTo("Add sticker on image") == 0) {
+
         } else if (source.getText().compareTo("Add text on image") == 0) {
             new TextAdd();
-
-        } else if (source.getText().compareTo("Add  Stickers on image") == 0) {
-
         } else if (source.getText().compareTo("Image brightness") == 0) {
 
             ImageBrightness ib = new ImageBrightness();
-            if (ir.aut.ceit.approach.ImageHandler.imageLoaded)
+            if (ImgArea.imageLoaded)
                 ib.enableSlider(true);
 
-        } else if (source.getText().compareTo("Image resize") == 0) {
+        } else if (source.getText().compareTo("Image crop") == 0) {
 
-            ImageResize ir = new ImageResize();
-            if (ImageHandler.imageLoaded)
+            ImageCrop ir = new ImageCrop();
+            if (ImgArea.imageLoaded)
                 ir.enableComponents(true);
         } else if (source.getText().compareTo("Image rotation") == 0) {
 
-            if (ir.aut.ceit.approach.ImageHandler.imageLoaded) {
+            if (ImgArea.imageLoaded) {
                 ia.rotateImage();
                 enableSaving(true);
-            } else if (source.getText().compareTo("Image crop") == 0) {
-                if (ImageHandler.imageLoaded) {
-                    //by me , for cropping
-                    ImageHandler imageHandler = new ImageHandler();
-                    imageHandler.cropImage(2000,1000);
-
-                }
 
             } else if (source.getText().compareTo("Image Filter") == 0) {
+                // BlurFilter blurFilter = new BlurFilter();
 
-            } else if (source.getText().compareTo("Image color") == 0) {
-
+            } else if (source.getText().compareTo("Image Color") == 0) {
             }
-
         } else if (source.getText().compareTo("Cancel editing") == 0) {
-
             ia.setImgFileName(filename);
             ia.reset();
         } else if (source.getText().compareTo("Exit") == 0)
@@ -834,8 +827,8 @@ class Controller extends JFrame implements ActionListener {
     }
 
     /**
-     * //The setImage method has code to open the file dialog so the user can choose
-     * //the file to show on the program interface
+     * The setImage method has code to open the file dialog so the user can choose
+     * the file to show on the program interface
      */
     public void setImage() {
 
@@ -849,6 +842,7 @@ class Controller extends JFrame implements ActionListener {
 
     /**
      * The showSaveFileDialog method has code to display the save file dialog
+     * //It is invoked when the user select Save as... sub-menu item
      */
     public void showSaveFileDialog() {
         int returnVal = chooser.showSaveDialog(this);
@@ -860,14 +854,17 @@ class Controller extends JFrame implements ActionListener {
     }
 
 
-    //The enableSaving method defines code to enable or  disable saving sub-menu items
+    /**The enableSaving method defines code to enable or  disable saving sub-menu items
+     *
+     * @param f
+     */
     public void enableSaving(boolean f) {
-        msaveas.setEnabled(f);
-        //  msave.setEnabled(f);
+
+        msave.setEnabled(f);
 
     }
 
-////end of the Controller class
+////end of the Main class
 
 
     public static void main(String args[]) {
